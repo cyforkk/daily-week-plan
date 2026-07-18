@@ -2079,13 +2079,13 @@
     const WEEKDAYS = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
     // 下拉展示顺序：周一 → 周日（符合国内习惯）
     const WEEKDAY_OPTIONS = [
-      { value: "星期一", label: "星期一", sub: "周一" },
-      { value: "星期二", label: "星期二", sub: "周二" },
-      { value: "星期三", label: "星期三", sub: "周三" },
-      { value: "星期四", label: "星期四", sub: "周四" },
-      { value: "星期五", label: "星期五", sub: "周五" },
-      { value: "星期六", label: "星期六", sub: "周六" },
-      { value: "星期日", label: "星期日", sub: "周日" }
+      { value: "星期一", label: "星期一" },
+      { value: "星期二", label: "星期二" },
+      { value: "星期三", label: "星期三" },
+      { value: "星期四", label: "星期四" },
+      { value: "星期五", label: "星期五" },
+      { value: "星期六", label: "星期六" },
+      { value: "星期日", label: "星期日" }
     ];
     const WEEK_DAY_DEFS = [
       { key: "mon", label: "周一" },
@@ -2122,11 +2122,11 @@
       life: "badge-life"
     };
     const ENERGY_OPTIONS = [
-      { value: "1", label: "1 · 很低", sub: "保护恢复，缩短深度块", tone: "tone-energy", energy: 1 },
-      { value: "2", label: "2 · 偏低", sub: "轻载推进，少开会", tone: "tone-energy", energy: 2 },
-      { value: "3", label: "3 · 一般", sub: "正常节奏即可", tone: "tone-energy", energy: 3 },
-      { value: "4", label: "4 · 良好", sub: "适合啃 MIT #1", tone: "tone-energy", energy: 4 },
-      { value: "5", label: "5 · 巅峰", sub: "拉长深度块", tone: "tone-energy", energy: 5 }
+      { value: "1", label: "1 · 很低", energy: 1 },
+      { value: "2", label: "2 · 偏低", energy: 2 },
+      { value: "3", label: "3 · 一般", energy: 3 },
+      { value: "4", label: "4 · 良好", energy: 4 },
+      { value: "5", label: "5 · 巅峰", energy: 5 }
     ];
     const BLOCK_TYPE_OPTIONS = Object.keys(TYPE_LABEL).map(function (k) {
       return {
