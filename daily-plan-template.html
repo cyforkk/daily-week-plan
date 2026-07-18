@@ -281,6 +281,15 @@
       background: var(--surface-2);
       text-decoration: none;
     }
+    a.inline-ext-link {
+      color: var(--text);
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    a.inline-ext-link:hover {
+      color: var(--muted);
+    }
 
     .status-pill {
       font-size: 12px;
@@ -1541,7 +1550,14 @@
     /* === Print === */
     @page { margin: 12mm; }
     @media print {
-      body { background: #fff !important; color: #000 !important; }
+      html, body {
+        background: #fff !important;
+        color: #000 !important;
+        overflow: visible !important;
+        height: auto !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
       :root {
         --text: #1c1917;
         --muted: #6b6560;
@@ -1560,24 +1576,45 @@
       .status-pill,
       .toast,
       .modal-root,
-      .no-print {
+      .no-print,
+      .sticky-day-actions {
         display: none !important;
       }
-      .page { padding: 0; max-width: none; }
-      .workspace { display: block; }
+      .page { padding: 0 !important; max-width: none !important; margin: 0 !important; }
+      .workspace { display: block !important; }
+      .panel { overflow: visible !important; border: 0 !important; box-shadow: none !important; }
       .preview-panel {
-        border: 0;
-        box-shadow: none;
+        border: 0 !important;
+        box-shadow: none !important;
+        display: block !important;
+        visibility: visible !important;
       }
-      .preview-panel .panel-hd { display: none; }
-      .preview-panel .panel-bd { padding: 0; }
-      .plan-sheet {
-        border: 0;
-        padding: 0;
-        max-width: none;
-        border-radius: 0;
+      .preview-panel .panel-hd { display: none !important; }
+      .preview-panel .panel-bd { padding: 0 !important; overflow: visible !important; }
+      .plan-sheet, .week-sheet {
+        border: 0 !important;
+        padding: 0 !important;
+        max-width: none !important;
+        border-radius: 0 !important;
+        display: block !important;
+        visibility: visible !important;
+        overflow: visible !important;
       }
-      .preview-sticky { position: static; }
+      .preview-sticky { position: static !important; }
+      /* 日打印：强制显示日预览，隐藏周面板 */
+      body:not(.print-week) #dayPanel {
+        display: block !important;
+      }
+      body:not(.print-week) #weekPanel {
+        display: none !important;
+      }
+      /* 周打印：强制显示周表 */
+      body.print-week #dayPanel {
+        display: none !important;
+      }
+      body.print-week #weekPanel {
+        display: block !important;
+      }
     }
 
     /* === Mobile polish === */
@@ -1627,6 +1664,7 @@
     <nav class="nav-links">
       <a href="#audit">检查计划</a>
       <a href="#reference">方法说明</a>
+      <a href="https://xinjing.cyforkk.top/" target="_blank" rel="noopener noreferrer" title="心境日记">日记</a>
     </nav>
     <div class="topbar-end">
       <button type="button" id="btnThemeToggle" class="theme-toggle" title="主题：跟随系统 / 浅色 / 深色" aria-label="切换主题">
@@ -1881,7 +1919,11 @@
                   <button type="button" id="btnAddTomorrow" class="btn-sm">+ 一件</button>
                 </div>
               </div>
-              <p class="hint" style="margin:10px 0 6px">睡觉仪式（任选几项，不必全勾）</p>
+              <p class="hint" style="margin:10px 0 6px">
+                睡觉仪式（任选几项，不必全勾）
+                ·
+                <a href="https://xinjing.cyforkk.top/" target="_blank" rel="noopener noreferrer" class="inline-ext-link">打开日记网站</a>
+              </p>
               <div class="checks" style="grid-template-columns:1fr 1fr">
                 <label class="check"><input type="checkbox" data-path="review.shutSteps.meditate" /> 冥想</label>
                 <label class="check"><input type="checkbox" data-path="review.shutSteps.mindfulness" /> 正念</label>
@@ -1893,9 +1935,15 @@
                 <label class="check"><input type="checkbox" data-path="review.shutSteps.reading" /> 阅读</label>
                 <label class="check"><input type="checkbox" data-path="review.shutSteps.body" /> 放松身体</label>
                 <label class="check"><input type="checkbox" data-path="review.shutSteps.music" /> 轻音乐</label>
+                <label class="check"><input type="checkbox" data-path="review.shutSteps.diary" /> 写日记</label>
                 <label class="check"><input type="checkbox" data-path="review.shutSteps.phrase" /> 可以放下工作了</label>
                 <label class="check"><input type="checkbox" data-path="review.shutSteps.inbox" /> 杂事已安顿</label>
               </div>
+              <p class="hint" style="margin:6px 0 0">
+                写日记可前往
+                <a href="https://xinjing.cyforkk.top/" target="_blank" rel="noopener noreferrer" class="inline-ext-link">心境日记</a>
+                （新标签页打开）
+              </p>
               <div class="grid-2" style="margin-top:8px">
                 <div class="field">
                   <label for="f-bedtime">睡觉时间</label>
@@ -2171,7 +2219,7 @@
             <div class="tip-card">
               <div class="num">12</div>
               <h4>睡觉仪式帮大脑下班</h4>
-              <p>任选几项：冥想、正念、拉伸、少看屏幕… 再定好睡觉时间即可，不必全勾。</p>
+              <p>任选几项：冥想、正念、写日记、拉伸… 再定好睡觉时间即可。日记可打开心境日记网站。</p>
             </div>
           </div>
         </div>
@@ -2691,9 +2739,12 @@
       { key: 'reading', label: '阅读' },
       { key: 'body', label: '放松身体' },
       { key: 'music', label: '轻音乐' },
+      { key: 'diary', label: '写日记' },
       { key: 'phrase', label: '可以放下工作了' },
       { key: 'inbox', label: '杂事已安顿' }
     ];
+    /** 外链：心境日记（睡觉仪式「写日记」） */
+    var DIARY_SITE_URL = "https://xinjing.cyforkk.top/";
 
     function emptyShutSteps() {
       var o = { tomorrow: false, calendar: false };
@@ -2913,6 +2964,7 @@
             var st = emptyShutSteps();
             st.meditate = true;
             st.stretch = true;
+            st.diary = true;
             st.noScreen = true;
             st.phrase = true;
             st.inbox = true;
@@ -6030,6 +6082,159 @@
       return lines.join("\n");
     }
 
+    /** 手机/内置浏览器上 window.print 常被静默忽略，用独立文档打印更稳 */
+    function prefersSimplePrint() {
+      try {
+        if (window.matchMedia && window.matchMedia("(max-width: 900px)").matches) return true;
+        if (typeof navigator !== "undefined" && navigator.maxTouchPoints > 1) return true;
+      } catch (e) { /* ignore */ }
+      return false;
+    }
+
+    function printDocumentStyles() {
+      return [
+        "html,body{margin:0;padding:12px;background:#fff;color:#1c1917;font:14px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;}",
+        "h1,h2,h3{margin:0 0 8px;font-weight:600;}",
+        "h1{font-size:18px;} h2{font-size:15px;} h3{font-size:14px;}",
+        "ul{margin:4px 0 10px 1.2em;padding:0;} li{margin:2px 0;}",
+        "table{width:100%;border-collapse:collapse;font-size:12px;}",
+        "th,td{border:1px solid #ddd;padding:6px 8px;text-align:left;vertical-align:top;word-break:break-word;}",
+        "th{background:#f0eeea;}",
+        ".plan-section{margin:12px 0;}",
+        ".plan-kv>div{margin:4px 0;}",
+        ".plan-meta{color:#6b6560;font-size:13px;margin-bottom:8px;}",
+        ".plan-footer{margin-top:16px;padding-top:8px;border-top:1px solid #ddd;font-size:11px;color:#6b6560;}",
+        ".badge{display:inline-block;padding:1px 6px;border:1px solid #ccc;border-radius:3px;font-size:11px;}",
+        ".empty-hint{color:#6b6560;font-style:italic;}",
+        "@page{margin:12mm;}"
+      ].join("");
+    }
+
+    /**
+     * 通过隐藏 iframe 触发打印（仍在用户点击栈内创建，避免弹窗拦截）。
+     * 比直接 print 整页更适配手机：不受 overflow/display:none 祖先影响。
+     */
+    function printViaIframe(title, bodyHtml) {
+      var iframe = document.createElement("iframe");
+      iframe.setAttribute("title", title || "打印");
+      iframe.setAttribute("aria-hidden", "true");
+      iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none;";
+      document.body.appendChild(iframe);
+      var win = iframe.contentWindow;
+      var doc = win && win.document;
+      if (!doc) {
+        if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        return false;
+      }
+      doc.open();
+      doc.write(
+        "<!DOCTYPE html><html><head><meta charset=\"utf-8\">" +
+        "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" +
+        "<title>" + String(title || "日序").replace(/</g, "") + "</title>" +
+        "<style>" + printDocumentStyles() + "</style></head><body>" +
+        bodyHtml +
+        "</body></html>"
+      );
+      doc.close();
+
+      var cleaned = false;
+      function cleanup() {
+        if (cleaned) return;
+        cleaned = true;
+        try {
+          if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+        } catch (e) { /* ignore */ }
+      }
+
+      try {
+        // 必须在用户点击同步栈内尽量立刻 print；延迟易被 iOS/微信静默忽略
+        var printed = false;
+        var run = function () {
+          if (printed) return;
+          printed = true;
+          try {
+            win.focus();
+            win.print();
+          } catch (err) {
+            cleanup();
+            return;
+          }
+          if (typeof win.onafterprint !== "undefined") {
+            win.onafterprint = cleanup;
+          }
+          setTimeout(cleanup, 60000);
+        };
+        run();
+        return true;
+      } catch (e2) {
+        cleanup();
+        return false;
+      }
+    }
+
+    /**
+     * 统一打印入口。
+     * - 桌面：整页 window.print（沿用完整样式）
+     * - 手机/触屏：iframe 打印预览内容（解决「点了没反应 / 空白页」）
+     */
+    function triggerPrint(opts) {
+      opts = opts || {};
+      var asWeek = !!opts.week;
+      try {
+        if (asWeek) {
+          ensureWeek();
+          renderWeekEditor();
+          document.body.classList.add("print-week");
+        } else {
+          document.body.classList.remove("print-week");
+          // 尽量不 setMode，避免打断用户手势；仅保证日预览最新
+          renderPreview();
+          var dayPanel = document.getElementById("dayPanel");
+          if (dayPanel && !dayPanel.classList.contains("active")) {
+            setMode("day");
+          }
+        }
+      } catch (e) { /* continue print */ }
+
+      var simple = prefersSimplePrint();
+      if (simple) {
+        var el = document.getElementById(asWeek ? "weekSheet" : "planSheet");
+        var html = el ? el.innerHTML : "";
+        if (!html || !String(html).replace(/\s/g, "").length) {
+          toast(asWeek ? "本周预览还是空的，先填一点内容再打印" : "日预览还是空的，先填一点内容再打印");
+          return;
+        }
+        var title = asWeek
+          ? ("日序·周计划·" + ((state.week && state.week.weekStart) || todayISO()))
+          : ("日序·日计划·" + ((state.meta && state.meta.date) || todayISO()));
+        var ok = printViaIframe(title, html);
+        if (ok) {
+          toast("正在打开打印…若无弹窗，请用系统浏览器打开本页，或改用 MD/TXT");
+        } else {
+          toast("当前环境无法打印，请改用 MD 或 TXT 导出");
+        }
+        return;
+      }
+
+      // 桌面：整页打印
+      if (typeof window.print !== "function") {
+        toast("浏览器不支持打印，请改用 MD 或 TXT 导出");
+        return;
+      }
+      try {
+        window.focus();
+        window.print();
+      } catch (err) {
+        // 桌面失败时回退 iframe
+        var el2 = document.getElementById(asWeek ? "weekSheet" : "planSheet");
+        if (el2 && printViaIframe("日序", el2.innerHTML)) {
+          toast("已改用兼容方式打开打印");
+        } else {
+          toast("无法打开打印，请改用 MD 或 TXT 导出");
+        }
+      }
+    }
+
     function downloadText(filename, content, mime) {
       // UTF-8 BOM helps Windows Notepad open Chinese correctly
       const bom = "\uFEFF";
@@ -6125,9 +6330,7 @@
       document.getElementById("btnWeekNext").addEventListener("click", function () { shiftWeek(1); });
       document.getElementById("btnThemePreset").addEventListener("click", fillThemeWeekPreset);
       document.getElementById("btnPrintWeek").addEventListener("click", function () {
-        setMode("week");
-        document.body.classList.add("print-week");
-        window.print();
+        triggerPrint({ week: true });
       });
       document.getElementById("btnWeekMd").addEventListener("click", function () {
         ensureWeek();
@@ -6200,9 +6403,7 @@
         toast("本地数据已全部清除");
       });
       document.getElementById("btnPrint").addEventListener("click", function () {
-        document.body.classList.remove("print-week");
-        setMode("day");
-        window.print();
+        triggerPrint({ week: false });
       });
       document.getElementById("btnMd").addEventListener("click", function () {
         downloadText(fileBase() + ".md", toMarkdown(state), "text/markdown;charset=utf-8");
