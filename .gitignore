@@ -12,3 +12,6 @@ Desktop.ini
 # Local temp
 artifacts/tmp/
 *.log
+
+# Netlify build output
+dist/
