@@ -4,7 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light dark" />
-  <title>成功人士日计划 · 通用模板生成器</title>
+  <meta name="description" content="日序 — 日/周计划本地工具。要事、时间块、复盘与关机；数据仅存本机。" />
+  <meta name="application-name" content="日序" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="favicon.svg" />
+  <title>日序</title>
   <script>
     /* 尽早应用主题，避免闪白/闪黑 */
     (function () {
@@ -249,6 +253,14 @@
       font-size: 12px;
       font-weight: 600;
       box-shadow: none;
+    }
+    .brand-logo {
+      width: 26px;
+      height: 26px;
+      border-radius: 4px;
+      display: block;
+      flex-shrink: 0;
+      object-fit: contain;
     }
     .nav-links {
       display: flex;
@@ -1582,8 +1594,8 @@
 <body>
   <header class="topbar no-print">
     <div class="brand">
-      <div class="brand-badge">计</div>
-      <span>日计划</span>
+      <img class="brand-logo" src="favicon.svg" width="26" height="26" alt="" />
+      <span>日序</span>
     </div>
     <div class="mode-tabs" role="tablist" aria-label="计划视图">
       <button type="button" id="tabDay" class="active" data-mode="day">日</button>
@@ -3778,7 +3790,7 @@
       if (!el) return;
       var planDate = state.meta.date || todayISO();
       var parts = [];
-      parts.push("<h3 style=\"margin:0 0 8px;font-size:16px\">周计划</h3>");
+      parts.push("<h3 style=\"margin:0 0 8px;font-size:16px\">日序 · 周计划</h3>");
       parts.push("<div style=\"color:#5c6578;font-size:13px;margin-bottom:10px\">");
       parts.push(escapeHtml(state.week.weekStart) + " 起（周一）");
       if (hasText(state.week.focus)) parts.push(" · 重点：" + escapeHtml(state.week.focus));
@@ -3885,7 +3897,7 @@
       ensureWeek();
       var w = s.week;
       var lines = [];
-      lines.push("# 周计划");
+      lines.push("# 日序 · 周计划");
       lines.push("");
       lines.push("- 周起始（周一）：" + (w.weekStart || "—"));
       if (hasText(w.focus)) lines.push("- 本周重点：" + w.focus);
@@ -3907,7 +3919,7 @@
       });
       lines.push("");
       lines.push("---");
-      lines.push("由「日/周计划模板」生成 · " + todayISO());
+      lines.push("日序 · 周计划 · " + todayISO());
       return lines.join("\n");
     }
 
@@ -4525,7 +4537,7 @@
       const h = v.health;
 
       parts.push('<header class="plan-header">');
-      parts.push('<h1 class="plan-title">日计划</h1>');
+      parts.push('<h1 class="plan-title">日序 · 日计划</h1>');
       parts.push('<div class="plan-meta">');
       if (v.dateLine) parts.push("<span>" + escapeHtml(v.dateLine) + "</span>");
       parts.push("<span>能量 " + energyDots(v.energy) + "</span>");
@@ -4650,8 +4662,8 @@
       }
 
       parts.push('<footer class="plan-footer">');
-      parts.push("<span>日计划</span>");
-      parts.push("<span>生成于 " + escapeHtml(todayISO()) + "</span>");
+      parts.push("<span>日序</span>");
+      parts.push("<span>" + escapeHtml(todayISO()) + "</span>");
       parts.push("</footer>");
 
       el.innerHTML = parts.join("");
@@ -4671,7 +4683,7 @@
       var lines = [];
       var r = v.review;
       var h = v.health;
-      lines.push("# 日计划");
+      lines.push("# 日序 · 日计划");
       lines.push("");
       if (v.dateLine) lines.push(v.dateLine.replace(" ", " · "));
       lines.push("能量：" + (v.energy || "—") + "/5");
@@ -4751,7 +4763,7 @@
       }
 
       lines.push("---");
-      lines.push("日计划 · " + todayISO());
+      lines.push("日序 · " + todayISO());
       return lines.join("\n");
     }
 
@@ -4760,7 +4772,7 @@
       var lines = [];
       var r = v.review;
       var h = v.health;
-      lines.push("日计划");
+      lines.push("日序 · 日计划");
       lines.push("==========");
       if (v.dateLine) lines.push(v.dateLine);
       lines.push("能量：" + (v.energy || "—") + "/5");
@@ -4836,7 +4848,7 @@
       }
 
       lines.push("----------");
-      lines.push("生成于 " + todayISO());
+      lines.push("日序 · " + todayISO());
       return lines.join("\n");
     }
 

@@ -4,7 +4,7 @@
 [build]
   # 静态站点：把主工具复制为 dist/index.html，不暴露 docs/skills 等
   # 使用 Node，兼容 Netlify Linux 与本地 Windows
-  command = "node -e \"require('fs').mkdirSync('dist',{recursive:true});require('fs').copyFileSync('daily-plan-template.html','dist/index.html')\""
+  command = "node -e \"const fs=require('fs');fs.mkdirSync('dist',{recursive:true});fs.copyFileSync('daily-plan-template.html','dist/index.html');fs.copyFileSync('favicon.svg','dist/favicon.svg');\""
   publish = "dist"
 
 # 本地 netlify dev 时用同一发布目录
