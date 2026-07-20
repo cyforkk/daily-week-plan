@@ -1216,6 +1216,64 @@
     }
     .mit-done input { width: 15px; height: 15px; accent-color: var(--health); }
 
+    .mit-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 10px 8px;
+      margin-bottom: 10px;
+      background: var(--surface);
+    }
+    .mit-card .mit-row {
+      margin-bottom: 0;
+    }
+    .mit-steps {
+      margin-top: 8px;
+      padding: 6px 0 0 8px;
+      border-left: 2px solid var(--border);
+    }
+    .mit-steps-hd {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .mit-steps-hd span {
+      font-size: 11.5px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .mit-step-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .mit-step-row input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      accent-color: var(--health);
+    }
+    .mit-step-row input[type="text"] {
+      width: 100%;
+      min-width: 0;
+      padding: 6px 8px;
+      font-size: 12.5px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--input-bg, var(--panel-bg));
+      color: var(--text);
+    }
+    .mit-step-row input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent, #3d6bf3);
+    }
+    .mit-step-row.done input[type="text"] {
+      text-decoration: line-through;
+      opacity: 0.72;
+    }
+
     /* Week plan */
     .week-grid {
       display: grid;
@@ -1743,6 +1801,7 @@
 
           <div class="form-section">
             <h3>今天要做的事</h3>
+            <p class="hint">先写 3 件左右要事；每件下面可拆成「原子行动」（具体下一步），一条一步，做完可勾选。</p>
             <div class="grid-2">
               <div class="field">
                 <label for="f-year">今年 / 本季目标</label>
@@ -2250,6 +2309,7 @@
     const STORAGE_DAY_PREFIX = "daily-plan-day-v2:";
     const STORAGE_WEEK_PREFIX = "daily-plan-week-v2:";
     const STORAGE_KEY = STORAGE_LEGACY; // 兼容旧清除逻辑名称
+    const MIT_STEP_MAX = 12;
     // 与 Date.getDay() 对齐：0=日 … 6=六（内部换算用，勿改顺序）
     const WEEKDAYS = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
     // 下拉展示顺序：周一 → 周日（符合国内习惯）
@@ -2783,7 +2843,8 @@
           weekFocus: "",
           mitCount: 3,
           mits: ["", "", "", "", "", ""],
-          mitDone: [false, false, false, false, false, false]
+          mitDone: [false, false, false, false, false, false],
+          mitSteps: [[], [], [], [], [], []]
         },
         morning: {
           items: {
@@ -2870,7 +2931,25 @@
             "",
             ""
           ],
-          mitDone: [false, false, false, false, false, false]
+          mitDone: [false, false, false, false, false, false],
+          mitSteps: [
+            [
+              { text: "列出交付清单", done: false },
+              { text: "写核心段落", done: false },
+              { text: "自检后发出", done: false }
+            ],
+            [
+              { text: "回重要消息", done: false },
+              { text: "约好需要同步的人", done: false }
+            ],
+            [
+              { text: "写三条进步与可改进", done: false },
+              { text: "填明天 Top 3", done: false }
+            ],
+            [],
+            [],
+            []
+          ]
         },
         morning: {
           items: {
@@ -3484,10 +3563,13 @@
     function mergeLinesIntoMits(lines) {
       ensureMitArrays();
       var prevDoneMap = {};
+      var prevStepsMap = {};
       var count = clampMitCount(state.goals.mitCount);
       for (var i = 0; i < count; i++) {
         if (hasText(state.goals.mits[i])) {
-          prevDoneMap[String(state.goals.mits[i]).trim()] = !!state.goals.mitDone[i];
+          var title = String(state.goals.mits[i]).trim();
+          prevDoneMap[title] = !!state.goals.mitDone[i];
+          prevStepsMap[title] = (state.goals.mitSteps[i] || []).map(normalizeMitStep);
         }
       }
       var existing = [];
@@ -3505,12 +3587,15 @@
       if (merged.length > MIT_MAX) merged = merged.slice(0, MIT_MAX);
       var mits = ["", "", "", "", "", ""];
       var dones = [false, false, false, false, false, false];
+      var steps = emptyMitStepsSlots();
       for (var k = 0; k < merged.length; k++) {
         mits[k] = merged[k];
         dones[k] = !!prevDoneMap[merged[k]];
+        steps[k] = prevStepsMap[merged[k]] ? prevStepsMap[merged[k]].map(normalizeMitStep) : [];
       }
       state.goals.mits = mits;
       state.goals.mitDone = dones;
+      state.goals.mitSteps = steps;
       state.goals.mitCount = clampMitCount(Math.max(MIT_MIN, merged.length || MIT_MIN));
       return merged.length;
     }
@@ -3612,6 +3697,7 @@
       for (var i = 0; i < n; i++) mits[i] = tomorrowLines[i];
       next.goals.mits = mits;
       next.goals.mitDone = [false, false, false, false, false, false];
+      next.goals.mitSteps = emptyMitStepsSlots();
       next.goals.mitCount = clampMitCount(Math.max(MIT_MIN, n || MIT_MIN));
       // 不自动灌入周主题 mock；需要时请在周计划里点「用作今日」
 
@@ -3760,6 +3846,9 @@
       if (!Array.isArray(s.goals.mitDone) || s.goals.mitDone.length < 6) {
         s.goals.mitDone = [false, false, false, false, false, false];
       }
+      s.goals.mitSteps = normalizeMitStepsArray(
+        data.goals && data.goals.mitSteps != null ? data.goals.mitSteps : s.goals.mitSteps
+      );
       if (data.week) {
         s.week.weekStart = data.week.weekStart || mondayOf(s.meta.date || todayISO());
         if (data.week.focus != null) s.week.focus = String(data.week.focus);
@@ -4436,6 +4525,39 @@
       suppressSave = false;
     }
 
+    function emptyMitStepsSlots() {
+      return [[], [], [], [], [], []];
+    }
+
+    function normalizeMitStep(raw) {
+      if (raw == null) return { text: "", done: false };
+      if (typeof raw === "string") return { text: String(raw), done: false };
+      return {
+        text: raw.text != null ? String(raw.text) : "",
+        done: !!raw.done
+      };
+    }
+
+    function normalizeMitStepsArray(src) {
+      var out = emptyMitStepsSlots();
+      if (!Array.isArray(src)) return out;
+      for (var i = 0; i < MIT_MAX; i++) {
+        var slot = src[i];
+        if (!Array.isArray(slot)) {
+          out[i] = [];
+          continue;
+        }
+        out[i] = slot.map(normalizeMitStep).slice(0, MIT_STEP_MAX);
+      }
+      return out;
+    }
+
+    function filledMitSteps(steps) {
+      return (steps || []).map(normalizeMitStep).filter(function (st) {
+        return hasText(st.text);
+      });
+    }
+
     function ensureMitArrays() {
       if (!Array.isArray(state.goals.mits) || state.goals.mits.length < MIT_MAX) {
         var next = ["", "", "", "", "", ""];
@@ -4451,6 +4573,7 @@
         }
         state.goals.mitDone = done;
       }
+      state.goals.mitSteps = normalizeMitStepsArray(state.goals.mitSteps);
     }
 
     function renderMitsEditor() {
@@ -4463,6 +4586,9 @@
       list.innerHTML = "";
       for (var j = 0; j < count; j++) {
         (function (index) {
+          var card = document.createElement("div");
+          card.className = "mit-card";
+
           var row = document.createElement("div");
           row.className = "mit-row";
           var field = document.createElement("div");
@@ -4504,7 +4630,113 @@
 
           row.appendChild(field);
           row.appendChild(doneWrap);
-          list.appendChild(row);
+          card.appendChild(row);
+
+          // 原子行动步骤
+          var stepsWrap = document.createElement("div");
+          stepsWrap.className = "mit-steps";
+          var stepsHd = document.createElement("div");
+          stepsHd.className = "mit-steps-hd";
+          var stepsLabel = document.createElement("span");
+          stepsLabel.textContent = "行动步骤（原子行动）";
+          var addStepBtn = document.createElement("button");
+          addStepBtn.type = "button";
+          addStepBtn.className = "btn-sm";
+          addStepBtn.textContent = "+ 一步";
+          addStepBtn.addEventListener("click", function () {
+            ensureMitArrays();
+            var arr = state.goals.mitSteps[index] || [];
+            if (arr.length >= MIT_STEP_MAX) {
+              toast("每件最多 " + MIT_STEP_MAX + " 步");
+              return;
+            }
+            arr.push({ text: "", done: false });
+            state.goals.mitSteps[index] = arr;
+            renderMitsEditor();
+            renderPreview();
+            scheduleSave();
+            var focus = document.getElementById("f-mit-step-" + index + "-" + (arr.length - 1));
+            if (focus) focus.focus();
+          });
+          stepsHd.appendChild(stepsLabel);
+          stepsHd.appendChild(addStepBtn);
+          stepsWrap.appendChild(stepsHd);
+
+          var steps = state.goals.mitSteps[index] || [];
+          if (!steps.length) {
+            var emptyHint = document.createElement("p");
+            emptyHint.className = "hint";
+            emptyHint.style.margin = "0 0 2px";
+            emptyHint.textContent = "还没有步骤，点「+ 一步」拆成可执行动作";
+            stepsWrap.appendChild(emptyHint);
+          }
+          steps.forEach(function (step, si) {
+            (function (stepIndex) {
+              var st = normalizeMitStep(state.goals.mitSteps[index][stepIndex]);
+              var srow = document.createElement("div");
+              srow.className = "mit-step-row" + (st.done ? " done" : "");
+              var scb = document.createElement("input");
+              scb.type = "checkbox";
+              scb.checked = !!st.done;
+              scb.title = "完成这一步";
+              scb.addEventListener("change", function () {
+                ensureMitArrays();
+                if (!state.goals.mitSteps[index][stepIndex]) return;
+                state.goals.mitSteps[index][stepIndex].done = scb.checked;
+                renderMitsEditor();
+                renderPreview();
+                scheduleSave();
+              });
+              var sin = document.createElement("input");
+              sin.type = "text";
+              sin.id = "f-mit-step-" + index + "-" + stepIndex;
+              sin.value = st.text || "";
+              sin.placeholder = "具体一步，如：打开文档写大纲";
+              sin.addEventListener("input", function () {
+                ensureMitArrays();
+                if (!state.goals.mitSteps[index][stepIndex]) {
+                  state.goals.mitSteps[index][stepIndex] = { text: "", done: false };
+                }
+                state.goals.mitSteps[index][stepIndex].text = sin.value;
+                renderPreview();
+                scheduleSave();
+              });
+              sin.addEventListener("keydown", function (ev) {
+                if (ev.key === "Enter") {
+                  ev.preventDefault();
+                  ensureMitArrays();
+                  var arr2 = state.goals.mitSteps[index] || [];
+                  if (arr2.length >= MIT_STEP_MAX) return;
+                  arr2.splice(stepIndex + 1, 0, { text: "", done: false });
+                  state.goals.mitSteps[index] = arr2;
+                  renderMitsEditor();
+                  renderPreview();
+                  scheduleSave();
+                  var nf = document.getElementById("f-mit-step-" + index + "-" + (stepIndex + 1));
+                  if (nf) nf.focus();
+                }
+              });
+              var del = document.createElement("button");
+              del.type = "button";
+              del.className = "del-btn";
+              del.title = "删除这步";
+              del.textContent = "×";
+              del.addEventListener("click", function () {
+                ensureMitArrays();
+                state.goals.mitSteps[index].splice(stepIndex, 1);
+                renderMitsEditor();
+                renderPreview();
+                scheduleSave();
+              });
+              srow.appendChild(scb);
+              srow.appendChild(sin);
+              srow.appendChild(del);
+              stepsWrap.appendChild(srow);
+            })(si);
+          });
+
+          card.appendChild(stepsWrap);
+          list.appendChild(card);
         })(j);
       }
 
@@ -4516,12 +4748,15 @@
       if (hint) {
         var doneN = 0;
         var openN = 0;
+        var stepN = 0;
         for (var k = 0; k < count; k++) {
           if (!hasText(state.goals.mits[k])) continue;
           if (state.goals.mitDone[k]) doneN++;
           else openN++;
+          stepN += filledMitSteps(state.goals.mitSteps[k]).length;
         }
-        hint.textContent = "共 " + count + " / " + MIT_MAX + " 项 · 完成 " + doneN + " · 未完成 " + openN;
+        hint.textContent = "共 " + count + " / " + MIT_MAX + " 项 · 完成 " + doneN + " · 未完成 " + openN +
+          (stepN ? " · 步骤 " + stepN : "");
       }
     }
 
@@ -4607,6 +4842,8 @@
       }
       state.goals.mits[lastIndex] = "";
       if (state.goals.mitDone) state.goals.mitDone[lastIndex] = false;
+      ensureMitArrays();
+      if (state.goals.mitSteps) state.goals.mitSteps[lastIndex] = [];
       state.goals.mitCount = count - 1;
       renderMitsEditor();
       renderPreview();
@@ -5485,12 +5722,14 @@
       var g = s.goals || {};
       var mitCount = clampMitCount(g.mitCount);
       var mits = [];
+      var mitStepsSrc = normalizeMitStepsArray(g.mitSteps);
       for (var i = 0; i < mitCount; i++) {
         if (g.mits && hasText(g.mits[i])) {
           mits.push({
             text: String(g.mits[i]).trim(),
             done: !!(g.mitDone && g.mitDone[i]),
-            index: i
+            index: i,
+            steps: filledMitSteps(mitStepsSrc[i])
           });
         }
       }
@@ -5657,6 +5896,15 @@
             var style = item.done ? ' style="text-decoration:line-through;opacity:0.75"' : "";
             var tag = i === 0 ? "最重要 · " : "第 " + (i + 1) + " 件 · ";
             parts.push("<li" + style + "><strong>" + tag + "</strong> " + mark + escapeHtml(item.text) + (item.done ? "（完成）" : "") + "</li>");
+            if (item.steps && item.steps.length) {
+              parts.push("<ul>");
+              item.steps.forEach(function (st) {
+                var sm = st.done ? "✓ " : "○ ";
+                var ss = st.done ? ' style="text-decoration:line-through;opacity:0.75"' : "";
+                parts.push("<li" + ss + ">" + sm + escapeHtml(st.text) + "</li>");
+              });
+              parts.push("</ul>");
+            }
           });
           parts.push("</ul>");
         }
@@ -5839,6 +6087,11 @@
         if (hasText(v.weekFocusDay)) lines.push("- 本周：" + v.weekFocusDay);
         v.mits.forEach(function (item, i) {
           lines.push("- " + (item.done ? "[x] " : "[ ] ") + "第 " + (i + 1) + " 件：" + item.text);
+          if (item.steps && item.steps.length) {
+            item.steps.forEach(function (st) {
+              lines.push("  - " + (st.done ? "[x] " : "[ ] ") + st.text);
+            });
+          }
         });
         lines.push("");
       }
@@ -5972,6 +6225,11 @@
         if (hasText(v.weekFocusDay)) lines.push("本周：" + v.weekFocusDay);
         v.mits.forEach(function (item, i) {
           lines.push((item.done ? "[完成] " : "[ ] ") + "第 " + (i + 1) + " 件：" + item.text);
+          if (item.steps && item.steps.length) {
+            item.steps.forEach(function (st) {
+              lines.push("    " + (st.done ? "[完成] " : "[ ] ") + st.text);
+            });
+          }
         });
         lines.push("");
       }
@@ -6237,10 +6495,10 @@
 
     function downloadText(filename, content, mime) {
       // UTF-8 BOM helps Windows Notepad open Chinese correctly
-      const bom = "\uFEFF";
-      const blob = new Blob([bom + content], { type: mime || "text/plain;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      var bom = "\uFEFF";
+      var blob = new Blob([bom + content], { type: mime || "text/plain;charset=utf-8" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
       a.href = url;
       a.download = filename;
       document.body.appendChild(a);
